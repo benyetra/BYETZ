@@ -1,0 +1,47 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "BYETZ-arm64-apple-macosx26.0-debug.module": ["<BYETZ-arm64-apple-macosx26.0-debug.module>"]
+  "PackageStructure": ["<PackageStructure>"]
+  "main": ["<BYETZ-arm64-apple-macosx26.0-debug.module>"]
+  "test": ["<BYETZ-arm64-apple-macosx26.0-debug.module>"]
+default: "main"
+nodes:
+  "/Users/byetz/Development/BYETZ App/ios/BYETZ/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/BYETZ.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/byetz/Development/BYETZ App/ios/BYETZ/BYETZApp.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/ContentView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Models/Clip.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Models/Interaction.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Models/Library.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Models/User.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Services/APIClient.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Services/AuthManager.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Services/KeychainService.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Utilities/HapticManager.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Utilities/OrientationManager.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/ViewModels/FeedViewModel.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/ViewModels/LibraryViewModel.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/ViewModels/ProfileViewModel.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/ViewModels/SettingsViewModel.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/ViewModels/TasteProfileViewModel.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Feed/FeedView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Feed/VideoPlayerView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Library/LibraryManagerView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/MainTabView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Onboarding/PlexAuthView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Onboarding/TasteProfileView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Profile/ProfileView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Settings/SettingsView.swift"]
+    outputs: ["/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/BYETZ.build/sources"]
+    description: "Write auxiliary file /Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/BYETZ.build/sources"
+
+  "/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"]
+    outputs: ["/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+
+  "<BYETZ-arm64-apple-macosx26.0-debug.module>":
+    tool: phony
+    inputs: ["/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/Modules/BYETZ.swiftmodule"]
+    outputs: ["<BYETZ-arm64-apple-macosx26.0-debug.module>"]
+
+  "C.BYETZ-arm64-apple-macosx26.0-debug.module":
+    tool: shell
+    inputs: ["/Users/byetz/Development/BYETZ App/ios/BYETZ/BYETZApp.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/ContentView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Models/Clip.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Models/Interaction.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Models/Library.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Models/User.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Services/APIClient.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Services/AuthManager.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Services/KeychainService.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Utilities/HapticManager.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Utilities/OrientationManager.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/ViewModels/FeedViewModel.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/ViewModels/LibraryViewModel.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/ViewModels/ProfileViewModel.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/ViewModels/SettingsViewModel.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/ViewModels/TasteProfileViewModel.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Feed/FeedView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Feed/VideoPlayerView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Library/LibraryManagerView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/MainTabView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Onboarding/PlexAuthView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Onboarding/TasteProfileView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Profile/ProfileView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Views/Settings/SettingsView.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt","/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/BYETZ.build/sources"]
+    outputs: ["/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/Modules/BYETZ.swiftmodule"]
+    description: "Compiling Swift Module 'BYETZ' (24 sources)"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-module-name","BYETZ","-emit-dependencies","-emit-module","-emit-module-path","/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/Modules/BYETZ.swiftmodule","-output-file-map","/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/BYETZ.build/output-file-map.json","-parse-as-library","-incremental","@/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/BYETZ.build/sources","-I","/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/Modules","-target","arm64-apple-macosx10.13","-incremental","-enable-batch-mode","-serialize-diagnostics","-Onone","-enable-testing","-j10","-DSWIFT_PACKAGE","-DDEBUG","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/ModuleCache","-parseable-output","-parse-as-library","-emit-objc-header","-emit-objc-header-path","/Users/byetz/Development/BYETZ App/ios/BYETZ/.build/index-build/arm64-apple-macosx/debug/BYETZ.build/include/BYETZ-Swift.h","-swift-version","5","-Xfrontend","-experimental-lazy-typecheck","-Xfrontend","-experimental-skip-all-function-bodies","-Xfrontend","-experimental-allow-module-with-compiler-errors","-Xfrontend","-empty-abi-descriptor","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g","-Xcc","-isysroot","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks","-Xcc","-fPIC","-Xcc","-g","-package-name","byetz"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/byetz/Development/BYETZ App/ios/BYETZ/","/Users/byetz/Development/BYETZ App/ios/BYETZ/Package.swift","/Users/byetz/Development/BYETZ App/ios/BYETZ/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+
