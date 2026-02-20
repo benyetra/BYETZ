@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
+import httpx
 from app.database import get_db
 from app.schemas.library import LibraryStatus, LibraryToggle
 from app.services.auth import get_current_user
@@ -37,3 +39,25 @@ async def toggle_library(
     service = LibraryService(db)
     await service.toggle_library(toggle.library_id, toggle.enabled)
     return {"status": "updated"}
+
+
+@router.get("/poster")
+async def proxy_poster(
+    url: str = Query(..., description="Plex poster URL to proxy"),
+):
+    """Proxy poster images from Plex so iOS clients don't need direct Plex access."""
+    if not url:
+        raise HTTPException(status_code=400, detail="Missing url parameter")
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(url)
+            if resp.status_code != 200:
+                raise HTTPException(status_code=resp.status_code, detail="Plex returned error")
+            content_type = resp.headers.get("content-type", "image/jpeg")
+            return StreamingResponse(
+                iter([resp.content]),
+                media_type=content_type,
+                headers={"Cache-Control": "public, max-age=86400"},
+            )
+    except httpx.RequestError:
+        raise HTTPException(status_code=502, detail="Could not reach Plex server")

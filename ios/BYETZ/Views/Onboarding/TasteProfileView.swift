@@ -84,7 +84,7 @@ struct TasteTitleCard: View {
                     .fill(Color.gray.opacity(0.3))
                     .aspectRatio(2/3, contentMode: .fit)
 
-                if let posterUrl = title.posterUrl, let url = URL(string: posterUrl) {
+                if let posterUrl = title.posterUrl, let url = title.resolvedPosterURL {
                     AsyncImage(url: url) { phase in
                         switch phase {
                         case .success(let image):

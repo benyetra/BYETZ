@@ -43,6 +43,17 @@ struct TasteProfileTitle: Codable, Identifiable {
     let genreTags: [String]
     let mediaType: String
 
+    /// Resolves relative poster paths (e.g. "/library/poster?url=...") to full URLs via the BYETZ API.
+    var resolvedPosterURL: URL? {
+        guard let posterUrl else { return nil }
+        if posterUrl.hasPrefix("http") {
+            return URL(string: posterUrl)
+        }
+        // Relative path — prepend the API base URL
+        let base = "http://192.168.1.9:8101"
+        return URL(string: "\(base)\(posterUrl)")
+    }
+
     enum CodingKeys: String, CodingKey {
         case mediaId = "media_id"
         case title

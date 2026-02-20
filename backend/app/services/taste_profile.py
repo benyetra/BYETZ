@@ -1,4 +1,5 @@
 import random
+from urllib.parse import quote
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -126,7 +127,8 @@ class TasteProfileService:
 
                     poster_url = None
                     if item.get("poster"):
-                        poster_url = f"{server_url}{item['poster']}?X-Plex-Token={server_token}"
+                        direct_url = f"{server_url}{item['poster']}?X-Plex-Token={server_token}"
+                        poster_url = f"/library/poster?url={quote(direct_url, safe='')}"
 
                     titles.append(TasteProfileTitle(
                         media_id=key,
