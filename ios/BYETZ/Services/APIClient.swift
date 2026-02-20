@@ -113,6 +113,14 @@ actor APIClient {
         return try await request("/library/status")
     }
 
+    func discoverLibraries() async throws {
+        let _: [String: String] = try await request("/library/discover", method: "POST")
+    }
+
+    func processLibraries() async throws {
+        let _: [String: String] = try await request("/library/process", method: "POST")
+    }
+
     func triggerRescan() async throws {
         let _: [String: String] = try await request("/library/rescan", method: "POST")
     }

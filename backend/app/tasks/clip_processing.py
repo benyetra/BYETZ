@@ -123,7 +123,9 @@ def process_media_item(self, media_item_id: str):
 
 
 @celery_app.task
-def scan_library(user_id: str):
+def discover_libraries(user_id: str):
+    """Phase 1: Discover Plex libraries and create PlexLibrary records.
+    Auto-disables libraries with '4K' or 'UHD' in the title."""
     db = SyncSession()
     try:
         user = db.execute(
@@ -136,6 +138,72 @@ def scan_library(user_id: str):
         loop = asyncio.new_event_loop()
         servers = loop.run_until_complete(plex_service.get_servers(user.plex_token))
 
+        libraries_found = 0
+        for server in servers:
+            server_token = server.get("token", user.plex_token)
+            server_url = f"http://{server['address']}:{server['port']}"
+            libraries = loop.run_until_complete(
+                plex_service.get_libraries(server_url, server_token)
+            )
+
+            for lib_info in libraries:
+                plex_lib = db.execute(
+                    select(PlexLibrary).where(
+                        PlexLibrary.server_id == server["server_id"],
+                        PlexLibrary.library_key == lib_info["library_key"],
+                    )
+                ).scalar_one_or_none()
+
+                title = lib_info["title"]
+                is_4k = any(tag in title.upper() for tag in ["4K", "UHD", "2160"])
+                if not plex_lib:
+                    plex_lib = PlexLibrary(
+                        server_id=server["server_id"],
+                        server_name=server["name"],
+                        library_key=lib_info["library_key"],
+                        library_title=title,
+                        library_type=lib_info["library_type"],
+                        total_items=lib_info.get("total_items", 0),
+                        enabled=not is_4k,
+                    )
+                    db.add(plex_lib)
+                else:
+                    plex_lib.total_items = lib_info.get("total_items", 0)
+                    plex_lib.last_scanned = datetime.utcnow()
+
+                libraries_found += 1
+
+        loop.close()
+        db.commit()
+        return {"status": "completed", "libraries_found": libraries_found}
+    except Exception as exc:
+        db.rollback()
+        return {"status": "error", "reason": str(exc)}
+    finally:
+        db.close()
+
+
+@celery_app.task
+def scan_library(user_id: str):
+    """Phase 2: Process only enabled libraries — fetch items and queue clip generation."""
+    db = SyncSession()
+    try:
+        user = db.execute(
+            select(User).where(User.id == uuid.UUID(user_id))
+        ).scalar_one_or_none()
+        if not user:
+            return {"status": "error", "reason": "user not found"}
+
+        plex_service = PlexService()
+        loop = asyncio.new_event_loop()
+        servers = loop.run_until_complete(plex_service.get_servers(user.plex_token))
+
+        # Get enabled libraries from DB
+        enabled_libs = db.execute(
+            select(PlexLibrary).where(PlexLibrary.enabled == True)
+        ).scalars().all()
+        enabled_keys = {(lib.server_id, lib.library_key) for lib in enabled_libs}
+
         items_queued = 0
         for server in servers:
             server_token = server.get("token", user.plex_token)
@@ -145,7 +213,10 @@ def scan_library(user_id: str):
             )
 
             for lib_info in libraries:
-                # Create or update PlexLibrary record
+                key = (server["server_id"], lib_info["library_key"])
+                if key not in enabled_keys:
+                    continue
+
                 plex_lib = db.execute(
                     select(PlexLibrary).where(
                         PlexLibrary.server_id == server["server_id"],
@@ -153,23 +224,9 @@ def scan_library(user_id: str):
                     )
                 ).scalar_one_or_none()
 
-                if not plex_lib:
-                    plex_lib = PlexLibrary(
-                        server_id=server["server_id"],
-                        server_name=server["name"],
-                        library_key=lib_info["library_key"],
-                        library_title=lib_info["title"],
-                        library_type=lib_info["library_type"],
-                        total_items=lib_info.get("total_items", 0),
-                        enabled=True,
-                    )
-                    db.add(plex_lib)
-                    db.flush()
-                else:
+                if plex_lib:
                     plex_lib.total_items = lib_info.get("total_items", 0)
                     plex_lib.last_scanned = datetime.utcnow()
-                    if not plex_lib.enabled:
-                        continue
 
                 # Fetch items from this library
                 items = loop.run_until_complete(
@@ -206,12 +263,13 @@ def scan_library(user_id: str):
                         items_queued += 1
 
                 # Update processed count
-                processed = db.execute(
-                    select(func.count()).select_from(MediaItem).where(
-                        MediaItem.processing_status == "completed",
-                    )
-                ).scalar() or 0
-                plex_lib.processed_items = processed
+                if plex_lib:
+                    processed = db.execute(
+                        select(func.count()).select_from(MediaItem).where(
+                            MediaItem.processing_status == "completed",
+                        )
+                    ).scalar() or 0
+                    plex_lib.processed_items = processed
 
         loop.close()
         db.commit()

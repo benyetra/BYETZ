@@ -20,6 +20,28 @@ async def get_library_status(
     return await service.get_status(user_id)
 
 
+@router.post("/discover")
+async def discover_libraries(
+    user_id: UUID = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Discover Plex libraries without processing. Auto-disables 4K/UHD libraries."""
+    service = LibraryService(db)
+    await service.discover(user_id)
+    return {"status": "discovery_queued"}
+
+
+@router.post("/process")
+async def process_libraries(
+    user_id: UUID = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Process only enabled libraries."""
+    service = LibraryService(db)
+    await service.trigger_rescan(user_id)
+    return {"status": "processing_queued"}
+
+
 @router.post("/rescan")
 async def trigger_rescan(
     user_id: UUID = Depends(get_current_user),

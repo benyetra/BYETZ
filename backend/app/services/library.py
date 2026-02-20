@@ -41,6 +41,10 @@ class LibraryService:
             server_name=server_name, server_reachable=server_reachable, libraries=details,
         )
 
+    async def discover(self, user_id: UUID):
+        from app.tasks.clip_processing import discover_libraries
+        discover_libraries.delay(str(user_id))
+
     async def trigger_rescan(self, user_id: UUID):
         from app.tasks.clip_processing import scan_library
         scan_library.delay(str(user_id))
