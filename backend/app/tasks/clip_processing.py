@@ -185,7 +185,8 @@ def discover_libraries(user_id: str):
 
 @celery_app.task
 def scan_library(user_id: str):
-    """Phase 2: Process only enabled libraries — fetch items and queue clip generation."""
+    """Phase 2: Process only enabled libraries — fetch items and queue clip generation.
+    Commits items to DB first, THEN queues Celery tasks so workers can find them."""
     db = SyncSession()
     try:
         user = db.execute(
@@ -204,7 +205,8 @@ def scan_library(user_id: str):
         ).scalars().all()
         enabled_keys = {(lib.server_id, lib.library_key) for lib in enabled_libs}
 
-        items_queued = 0
+        # Phase 1: Collect all items and save to DB
+        item_ids_to_process = []
         for server in servers:
             server_token = server.get("token", user.plex_token)
             server_url = f"http://{server['address']}:{server['port']}"
@@ -228,10 +230,11 @@ def scan_library(user_id: str):
                     plex_lib.total_items = lib_info.get("total_items", 0)
                     plex_lib.last_scanned = datetime.utcnow()
 
-                # Fetch items from this library
+                # Fetch items — pass library_type so episodes are fetched for shows
                 items = loop.run_until_complete(
                     plex_service.get_library_items(
                         server_url, server_token, lib_info["library_key"],
+                        library_type=lib_info["library_type"],
                     )
                 )
 
@@ -256,11 +259,9 @@ def scan_library(user_id: str):
                         )
                         db.add(media_item)
                         db.flush()
-                        process_media_item.delay(str(media_item.id))
-                        items_queued += 1
+                        item_ids_to_process.append(str(media_item.id))
                     elif existing.processing_status in ("pending", "failed"):
-                        process_media_item.delay(str(existing.id))
-                        items_queued += 1
+                        item_ids_to_process.append(str(existing.id))
 
                 # Update processed count
                 if plex_lib:
@@ -272,8 +273,15 @@ def scan_library(user_id: str):
                     plex_lib.processed_items = processed
 
         loop.close()
+
+        # Commit all items to DB BEFORE queuing tasks
         db.commit()
-        return {"status": "completed", "items_queued": items_queued}
+
+        # Phase 2: Now queue tasks — workers will find committed items
+        for item_id in item_ids_to_process:
+            process_media_item.delay(item_id)
+
+        return {"status": "completed", "items_queued": len(item_ids_to_process)}
     except Exception as exc:
         db.rollback()
         return {"status": "error", "reason": str(exc)}

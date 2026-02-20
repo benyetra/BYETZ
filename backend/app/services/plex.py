@@ -89,32 +89,61 @@ class PlexService:
                 pass
         return []
 
-    async def get_library_items(self, server_url: str, token: str, library_key: str) -> list[dict]:
-        async with httpx.AsyncClient() as client:
+    async def get_library_items(
+        self, server_url: str, token: str, library_key: str, library_type: str = "movie",
+    ) -> list[dict]:
+        """Fetch processable items from a Plex library.
+        For movie libraries: returns movies directly.
+        For show libraries: returns episodes (type=4) so we get actual file paths."""
+        async with httpx.AsyncClient(timeout=60.0) as client:
             try:
+                # For show libraries, fetch episodes directly (type=4)
+                # Shows themselves don't have file paths — episodes do
+                url = f"{server_url}/library/sections/{library_key}/all"
+                params = {}
+                if library_type == "show":
+                    params["type"] = "4"  # Plex type 4 = episode
+
                 response = await client.get(
-                    f"{server_url}/library/sections/{library_key}/all",
+                    url,
                     headers={**self.headers, "X-Plex-Token": token},
+                    params=params,
                 )
                 if response.status_code == 200:
                     data = response.json()
                     items = []
                     for item in data.get("MediaContainer", {}).get("Metadata", []):
-                        media = item.get("Media", [{}])[0]
-                        parts = media.get("Part", [{}])
+                        media = item.get("Media", [{}])
+                        if not media:
+                            continue
+                        parts = media[0].get("Part", [{}])
                         file_path = parts[0].get("file") if parts else None
+                        if not file_path:
+                            continue
+
+                        # For episodes, build a combined title
+                        title = item.get("grandparentTitle", item["title"])
+                        season_episode = None
+                        if item.get("type") == "episode":
+                            s = item.get("parentIndex", 0)
+                            e = item.get("index", 0)
+                            season_episode = f"S{s:02d}E{e:02d}"
+                            ep_title = item.get("title", "")
+                            title = f"{item.get('grandparentTitle', title)} - {season_episode} - {ep_title}"
+
                         items.append({
                             "rating_key": item["ratingKey"],
-                            "title": item["title"],
+                            "title": title,
                             "type": item["type"],
-                            "year": item.get("year"),
+                            "year": item.get("year") or item.get("parentYear"),
                             "genres": [g["tag"] for g in item.get("Genre", [])],
                             "actors": [r["tag"] for r in item.get("Role", [])[:5]],
                             "director": next((d["tag"] for d in item.get("Director", [])), None),
                             "duration": item.get("duration"),
-                            "poster": item.get("thumb"),
+                            "poster": item.get("thumb") or item.get("grandparentThumb"),
                             "content_rating": item.get("contentRating"),
                             "file_path": file_path,
+                            "season_episode": season_episode,
                         })
                     return items
             except httpx.RequestError:
