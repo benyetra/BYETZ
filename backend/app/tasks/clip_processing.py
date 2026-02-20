@@ -2,7 +2,7 @@ import os
 import uuid
 import asyncio
 from datetime import datetime
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import sessionmaker
 from app.tasks.celery_app import celery_app
 from app.config import get_settings
@@ -29,6 +29,12 @@ def process_media_item(self, media_item_id: str):
 
         if not item or not item.file_path:
             return {"status": "skipped", "reason": "item not found or no file path"}
+
+        # Check if file is accessible
+        if not os.path.exists(item.file_path):
+            item.processing_status = "pending"
+            db.commit()
+            return {"status": "skipped", "reason": f"file not accessible: {item.file_path}"}
 
         item.processing_status = "processing"
         db.commit()
@@ -95,6 +101,14 @@ def process_media_item(self, media_item_id: str):
         item.processing_status = "completed"
         item.clips_generated = clips_created
         item.last_processed = datetime.utcnow()
+
+        # Update PlexLibrary processed count
+        db.execute(
+            select(func.count()).select_from(MediaItem).where(
+                MediaItem.processing_status == "completed"
+            )
+        )
+
         db.commit()
         return {"status": "completed", "clips_created": clips_created}
 
@@ -124,32 +138,53 @@ def scan_library(user_id: str):
 
         items_queued = 0
         for server in servers:
+            server_token = server.get("token", user.plex_token)
             server_url = f"http://{server['address']}:{server['port']}"
             libraries = loop.run_until_complete(
-                plex_service.get_libraries(server_url, server.get("token", user.plex_token))
+                plex_service.get_libraries(server_url, server_token)
             )
+
             for lib_info in libraries:
-                lib = db.execute(
+                # Create or update PlexLibrary record
+                plex_lib = db.execute(
                     select(PlexLibrary).where(
                         PlexLibrary.server_id == server["server_id"],
                         PlexLibrary.library_key == lib_info["library_key"],
                     )
                 ).scalar_one_or_none()
-                if lib and not lib.enabled:
-                    continue
 
+                if not plex_lib:
+                    plex_lib = PlexLibrary(
+                        server_id=server["server_id"],
+                        server_name=server["name"],
+                        library_key=lib_info["library_key"],
+                        library_title=lib_info["title"],
+                        library_type=lib_info["library_type"],
+                        total_items=lib_info.get("total_items", 0),
+                        enabled=True,
+                    )
+                    db.add(plex_lib)
+                    db.flush()
+                else:
+                    plex_lib.total_items = lib_info.get("total_items", 0)
+                    plex_lib.last_scanned = datetime.utcnow()
+                    if not plex_lib.enabled:
+                        continue
+
+                # Fetch items from this library
                 items = loop.run_until_complete(
                     plex_service.get_library_items(
-                        server_url, server.get("token", user.plex_token),
-                        lib_info["library_key"],
+                        server_url, server_token, lib_info["library_key"],
                     )
                 )
+
                 for item_data in items:
                     existing = db.execute(
                         select(MediaItem).where(
                             MediaItem.plex_rating_key == item_data["rating_key"]
                         )
                     ).scalar_one_or_none()
+
                     if not existing:
                         media_item = MediaItem(
                             plex_rating_key=item_data["rating_key"],
@@ -169,6 +204,14 @@ def scan_library(user_id: str):
                     elif existing.processing_status in ("pending", "failed"):
                         process_media_item.delay(str(existing.id))
                         items_queued += 1
+
+                # Update processed count
+                processed = db.execute(
+                    select(func.count()).select_from(MediaItem).where(
+                        MediaItem.processing_status == "completed",
+                    )
+                ).scalar() or 0
+                plex_lib.processed_items = processed
 
         loop.close()
         db.commit()

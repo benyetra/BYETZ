@@ -99,10 +99,33 @@ struct FeedView: View {
                             .font(.system(size: 48))
                             .foregroundColor(.gray)
                         Text("No clips available")
+                            .font(.title3)
                             .foregroundColor(.gray)
-                        Text("Process your library to generate clips")
+                        Text("Scan your Plex library to generate clips")
                             .font(.caption)
                             .foregroundColor(.gray.opacity(0.7))
+
+                        Button(action: {
+                            Task {
+                                do {
+                                    try await APIClient.shared.triggerRescan()
+                                } catch {
+                                    print("Rescan failed: \(error)")
+                                }
+                            }
+                        }) {
+                            HStack {
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                Text("Scan Library")
+                            }
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 24)
+                            .padding(.vertical, 12)
+                            .background(Color.orange)
+                            .foregroundColor(.black)
+                            .cornerRadius(12)
+                        }
+                        .padding(.top, 8)
                     }
                 }
             }
