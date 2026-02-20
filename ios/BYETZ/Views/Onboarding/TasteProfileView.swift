@@ -79,33 +79,61 @@ struct TasteTitleCard: View {
 
     var body: some View {
         VStack(spacing: 4) {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.gray.opacity(0.3))
-                .aspectRatio(2/3, contentMode: .fit)
-                .overlay(
-                    VStack {
-                        Image(systemName: "film")
-                            .font(.title)
-                            .foregroundColor(.gray)
-                        Text(title.title)
-                            .font(.caption2)
-                            .foregroundColor(.white)
-                            .multilineTextAlignment(.center)
-                            .lineLimit(2)
-                            .padding(.horizontal, 4)
+            ZStack {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.gray.opacity(0.3))
+                    .aspectRatio(2/3, contentMode: .fit)
+
+                if let posterUrl = title.posterUrl, let url = URL(string: posterUrl) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(2/3, contentMode: .fill)
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        case .failure:
+                            posterPlaceholder
+                        case .empty:
+                            ProgressView()
+                                .tint(.gray)
+                        @unknown default:
+                            posterPlaceholder
+                        }
                     }
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 3)
-                )
-                .overlay(alignment: .topTrailing) {
-                    if isSelected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.orange)
-                            .padding(4)
-                    }
+                } else {
+                    posterPlaceholder
                 }
+            }
+            .aspectRatio(2/3, contentMode: .fit)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isSelected ? Color.orange : Color.clear, lineWidth: 3)
+            )
+            .overlay(alignment: .topTrailing) {
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.orange)
+                        .padding(4)
+                }
+            }
+            .overlay(alignment: .bottom) {
+                Text(title.title)
+                    .font(.caption2.bold())
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 4)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        LinearGradient(colors: [.clear, .black.opacity(0.8)], startPoint: .top, endPoint: .bottom)
+                    )
+                    .clipShape(
+                        UnevenRoundedRectangle(bottomLeadingRadius: 8, bottomTrailingRadius: 8)
+                    )
+            }
 
             if let year = title.year {
                 Text(String(year))
@@ -114,5 +142,19 @@ struct TasteTitleCard: View {
             }
         }
         .onTapGesture(perform: onTap)
+    }
+
+    private var posterPlaceholder: some View {
+        VStack {
+            Image(systemName: "film")
+                .font(.title)
+                .foregroundColor(.gray)
+            Text(title.title)
+                .font(.caption2)
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .padding(.horizontal, 4)
+        }
     }
 }

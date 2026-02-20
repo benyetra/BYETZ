@@ -1,3 +1,4 @@
+import random
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
@@ -5,6 +6,56 @@ from app.models.clip import MediaItem
 from app.models.user import User, TasteSelection, UserEmbedding
 from app.schemas.library import TasteProfileTitle
 from app.services.plex import PlexService
+
+SAMPLE_SIZE = 50
+
+
+def _sample_genre_diverse(titles: list[TasteProfileTitle], n: int) -> list[TasteProfileTitle]:
+    """Sample n titles ensuring all genres are represented."""
+    if len(titles) <= n:
+        random.shuffle(titles)
+        return titles
+
+    # Build genre -> titles mapping
+    genre_buckets: dict[str, list[TasteProfileTitle]] = {}
+    no_genre: list[TasteProfileTitle] = []
+    for t in titles:
+        if not t.genre_tags:
+            no_genre.append(t)
+        else:
+            for g in t.genre_tags:
+                genre_buckets.setdefault(g, []).append(t)
+
+    # Shuffle each bucket
+    for bucket in genre_buckets.values():
+        random.shuffle(bucket)
+    random.shuffle(no_genre)
+
+    selected: list[TasteProfileTitle] = []
+    selected_ids: set[str] = set()
+
+    # Round-robin: pick one from each genre to guarantee coverage
+    for genre in sorted(genre_buckets.keys()):
+        for t in genre_buckets[genre]:
+            if t.media_id not in selected_ids:
+                selected.append(t)
+                selected_ids.add(t.media_id)
+                break
+        if len(selected) >= n:
+            break
+
+    # Fill remaining slots randomly from all titles
+    if len(selected) < n:
+        remaining = [t for t in titles if t.media_id not in selected_ids]
+        random.shuffle(remaining)
+        for t in remaining:
+            selected.append(t)
+            selected_ids.add(t.media_id)
+            if len(selected) >= n:
+                break
+
+    random.shuffle(selected)
+    return selected
 
 
 class TasteProfileService:
@@ -19,10 +70,11 @@ class TasteProfileService:
         count = count_result.scalar() or 0
 
         if count > 0:
-            return await self._titles_from_db()
+            titles = await self._titles_from_db()
+        else:
+            titles = await self._titles_from_plex(user_id)
 
-        # No media items — fetch directly from Plex
-        return await self._titles_from_plex(user_id)
+        return _sample_genre_diverse(titles, SAMPLE_SIZE)
 
     async def _titles_from_db(self) -> list[TasteProfileTitle]:
         result = await self.db.execute(
@@ -41,7 +93,6 @@ class TasteProfileService:
         ]
 
     async def _titles_from_plex(self, user_id: UUID) -> list[TasteProfileTitle]:
-        # Get user's Plex token
         result = await self.db.execute(
             select(User).where(User.id == user_id)
         )
@@ -86,7 +137,6 @@ class TasteProfileService:
                         media_type=item.get("type", "movie"),
                     ))
 
-        titles.sort(key=lambda t: t.title)
         return titles
 
     async def save_selections(self, user_id: UUID, selections: list[TasteProfileTitle]):
