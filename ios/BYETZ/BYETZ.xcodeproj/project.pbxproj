@@ -1,0 +1,460 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 63;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		071A1CA6E3242A953A507538 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B385F855CD326E3FBE223C2C /* SettingsViewModel.swift */; };
+		22D54C80D5C23138B7BF69A1 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09C889E3EB432746ED8986AF /* VideoPlayerView.swift */; };
+		298B1B6BF16744FB5A4C1F75 /* ProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF7F86A0A791BC0F07895026 /* ProfileViewModel.swift */; };
+		2A7C870110E4AE20210C759C /* FeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 945EC761B38B4873B63EA1BD /* FeedView.swift */; };
+		2C5A11F93974FDFA91F9BDC1 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B255F221344E36D23C4811B /* SettingsView.swift */; };
+		2D31A8BD79A8419CB3630F2B /* TasteProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6563E777F609C9F15EC195CA /* TasteProfileView.swift */; };
+		2FE9A8B5C7BC6BF83CBE379A /* LibraryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77F23AA3DE2746C85FA3292C /* LibraryViewModel.swift */; };
+		320AC47C025FF816243F0501 /* PlexAuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 18532A54743FE86CFD12AE20 /* PlexAuthView.swift */; };
+		36C2AC4362C23EAFD6272F25 /* AuthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 709551C3FAE974F39E3E0E1B /* AuthManager.swift */; };
+		3C19DC39FAD9622DA5DB7BF6 /* Clip.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A4F51C73C211B53521E2FE7 /* Clip.swift */; };
+		428122B234E1F7F7CFC02A69 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12631A0B7F325258577E9CB2 /* ContentView.swift */; };
+		47F2A55C74EC8261BAB4C651 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B465609DB09E92D3F6CD06CC /* MainTabView.swift */; };
+		51F6C5A199AE114AB2E6C915 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 904B923CA5E0BE7121B0E74B /* APIClient.swift */; };
+		659F5611A365C0EA06460422 /* TasteProfileViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82DBF6CEA3150D0F40CD094C /* TasteProfileViewModel.swift */; };
+		6D9D5FE619148C39DEF335A4 /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = B42E0D2AD8BE693021208612 /* User.swift */; };
+		8506AA2555ECF70605A687A0 /* Library.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C7E995E643593EA280DBD8E /* Library.swift */; };
+		8D0271B7615C50E0F12B3A54 /* Interaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C611789E56538B994148D8A /* Interaction.swift */; };
+		92C041667BE35C73DB485728 /* BYETZApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D75B1916A433975E399556DD /* BYETZApp.swift */; };
+		B236D7DB5E8F66D2C118695D /* FeedViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4F96D12B3AD6E42B7D5418C /* FeedViewModel.swift */; };
+		B7913A6676A40451E6371A8E /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C20CCE1916D79C38DAA96FE /* ProfileView.swift */; };
+		D5072962875D2172B60596AD /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E49B76484F77FFAF0352246 /* HapticManager.swift */; };
+		E2879E11992F40F6ED403B5C /* LibraryManagerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8374EA87BE6BE647C2D019A9 /* LibraryManagerView.swift */; };
+		E7D2FF53B86E86A95E3BF5CC /* OrientationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C81220C1DFE9DCD256B9229 /* OrientationManager.swift */; };
+		FC31D83B989FF3913CF02E36 /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D2F43092FBC29A11AD026C6 /* KeychainService.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		09C889E3EB432746ED8986AF /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
+		0E49B76484F77FFAF0352246 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		12631A0B7F325258577E9CB2 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		18532A54743FE86CFD12AE20 /* PlexAuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlexAuthView.swift; sourceTree = "<group>"; };
+		1C20CCE1916D79C38DAA96FE /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		2C611789E56538B994148D8A /* Interaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Interaction.swift; sourceTree = "<group>"; };
+		2C81220C1DFE9DCD256B9229 /* OrientationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrientationManager.swift; sourceTree = "<group>"; };
+		3B255F221344E36D23C4811B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		5C7E995E643593EA280DBD8E /* Library.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Library.swift; sourceTree = "<group>"; };
+		6563E777F609C9F15EC195CA /* TasteProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteProfileView.swift; sourceTree = "<group>"; };
+		6A4F51C73C211B53521E2FE7 /* Clip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Clip.swift; sourceTree = "<group>"; };
+		6D2F43092FBC29A11AD026C6 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
+		709551C3FAE974F39E3E0E1B /* AuthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthManager.swift; sourceTree = "<group>"; };
+		77F23AA3DE2746C85FA3292C /* LibraryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryViewModel.swift; sourceTree = "<group>"; };
+		82DBF6CEA3150D0F40CD094C /* TasteProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasteProfileViewModel.swift; sourceTree = "<group>"; };
+		8374EA87BE6BE647C2D019A9 /* LibraryManagerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryManagerView.swift; sourceTree = "<group>"; };
+		904B923CA5E0BE7121B0E74B /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		945EC761B38B4873B63EA1BD /* FeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedView.swift; sourceTree = "<group>"; };
+		AF7F86A0A791BC0F07895026 /* ProfileViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewModel.swift; sourceTree = "<group>"; };
+		B385F855CD326E3FBE223C2C /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
+		B42E0D2AD8BE693021208612 /* User.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = User.swift; sourceTree = "<group>"; };
+		B465609DB09E92D3F6CD06CC /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		D75B1916A433975E399556DD /* BYETZApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BYETZApp.swift; sourceTree = "<group>"; };
+		E4F96D12B3AD6E42B7D5418C /* FeedViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeedViewModel.swift; sourceTree = "<group>"; };
+		FB1E5F4C20B27BE8B7E3E236 /* BYETZ.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BYETZ.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		1151C9537C5DB6BD25C40506 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				3B255F221344E36D23C4811B /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		87E1B74202C1FDC3767FAB50 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				FB1E5F4C20B27BE8B7E3E236 /* BYETZ.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8FA30363A9D388532E11FD18 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				E4F96D12B3AD6E42B7D5418C /* FeedViewModel.swift */,
+				77F23AA3DE2746C85FA3292C /* LibraryViewModel.swift */,
+				AF7F86A0A791BC0F07895026 /* ProfileViewModel.swift */,
+				B385F855CD326E3FBE223C2C /* SettingsViewModel.swift */,
+				82DBF6CEA3150D0F40CD094C /* TasteProfileViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		917F11D90C05422FA89771A1 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				0E49B76484F77FFAF0352246 /* HapticManager.swift */,
+				2C81220C1DFE9DCD256B9229 /* OrientationManager.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		92D351C23A6102CE224D973C /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				18532A54743FE86CFD12AE20 /* PlexAuthView.swift */,
+				6563E777F609C9F15EC195CA /* TasteProfileView.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
+		A64EFBB24BEE17B996B5FB6B = {
+			isa = PBXGroup;
+			children = (
+				D75B1916A433975E399556DD /* BYETZApp.swift */,
+				12631A0B7F325258577E9CB2 /* ContentView.swift */,
+				E9FEFD6238ACFB9040F8A355 /* Models */,
+				BF8995627A18267D67F2FF7C /* Services */,
+				917F11D90C05422FA89771A1 /* Utilities */,
+				8FA30363A9D388532E11FD18 /* ViewModels */,
+				DD87C92F94D83B706E5BDE3F /* Views */,
+				87E1B74202C1FDC3767FAB50 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		BF8995627A18267D67F2FF7C /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				904B923CA5E0BE7121B0E74B /* APIClient.swift */,
+				709551C3FAE974F39E3E0E1B /* AuthManager.swift */,
+				6D2F43092FBC29A11AD026C6 /* KeychainService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		DD87C92F94D83B706E5BDE3F /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				B465609DB09E92D3F6CD06CC /* MainTabView.swift */,
+				FBB7496F064D2E15526C0FDB /* Feed */,
+				EDA88A3AFF24DEE8B04C8D10 /* Library */,
+				92D351C23A6102CE224D973C /* Onboarding */,
+				E54A67DDB433A59101203493 /* Profile */,
+				1151C9537C5DB6BD25C40506 /* Settings */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		E54A67DDB433A59101203493 /* Profile */ = {
+			isa = PBXGroup;
+			children = (
+				1C20CCE1916D79C38DAA96FE /* ProfileView.swift */,
+			);
+			path = Profile;
+			sourceTree = "<group>";
+		};
+		E9FEFD6238ACFB9040F8A355 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				6A4F51C73C211B53521E2FE7 /* Clip.swift */,
+				2C611789E56538B994148D8A /* Interaction.swift */,
+				5C7E995E643593EA280DBD8E /* Library.swift */,
+				B42E0D2AD8BE693021208612 /* User.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		EDA88A3AFF24DEE8B04C8D10 /* Library */ = {
+			isa = PBXGroup;
+			children = (
+				8374EA87BE6BE647C2D019A9 /* LibraryManagerView.swift */,
+			);
+			path = Library;
+			sourceTree = "<group>";
+		};
+		FBB7496F064D2E15526C0FDB /* Feed */ = {
+			isa = PBXGroup;
+			children = (
+				945EC761B38B4873B63EA1BD /* FeedView.swift */,
+				09C889E3EB432746ED8986AF /* VideoPlayerView.swift */,
+			);
+			path = Feed;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0D65CA9635633DC9050814F8 /* BYETZ */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 382700E931C836582BF82716 /* Build configuration list for PBXNativeTarget "BYETZ" */;
+			buildPhases = (
+				D91BF93C9C21D5059B2B52D6 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BYETZ;
+			packageProductDependencies = (
+			);
+			productName = BYETZ;
+			productReference = FB1E5F4C20B27BE8B7E3E236 /* BYETZ.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		6CC02B0665109D8D7CA077E7 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					0D65CA9635633DC9050814F8 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 10CB967F83E7CA8C372D72CB /* Build configuration list for PBXProject "BYETZ" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = A64EFBB24BEE17B996B5FB6B;
+			minimizedProjectReferenceProxies = 1;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0D65CA9635633DC9050814F8 /* BYETZ */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		D91BF93C9C21D5059B2B52D6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				51F6C5A199AE114AB2E6C915 /* APIClient.swift in Sources */,
+				36C2AC4362C23EAFD6272F25 /* AuthManager.swift in Sources */,
+				92C041667BE35C73DB485728 /* BYETZApp.swift in Sources */,
+				3C19DC39FAD9622DA5DB7BF6 /* Clip.swift in Sources */,
+				428122B234E1F7F7CFC02A69 /* ContentView.swift in Sources */,
+				2A7C870110E4AE20210C759C /* FeedView.swift in Sources */,
+				B236D7DB5E8F66D2C118695D /* FeedViewModel.swift in Sources */,
+				D5072962875D2172B60596AD /* HapticManager.swift in Sources */,
+				8D0271B7615C50E0F12B3A54 /* Interaction.swift in Sources */,
+				FC31D83B989FF3913CF02E36 /* KeychainService.swift in Sources */,
+				8506AA2555ECF70605A687A0 /* Library.swift in Sources */,
+				E2879E11992F40F6ED403B5C /* LibraryManagerView.swift in Sources */,
+				2FE9A8B5C7BC6BF83CBE379A /* LibraryViewModel.swift in Sources */,
+				47F2A55C74EC8261BAB4C651 /* MainTabView.swift in Sources */,
+				E7D2FF53B86E86A95E3BF5CC /* OrientationManager.swift in Sources */,
+				320AC47C025FF816243F0501 /* PlexAuthView.swift in Sources */,
+				B7913A6676A40451E6371A8E /* ProfileView.swift in Sources */,
+				298B1B6BF16744FB5A4C1F75 /* ProfileViewModel.swift in Sources */,
+				2C5A11F93974FDFA91F9BDC1 /* SettingsView.swift in Sources */,
+				071A1CA6E3242A953A507538 /* SettingsViewModel.swift in Sources */,
+				2D31A8BD79A8419CB3630F2B /* TasteProfileView.swift in Sources */,
+				659F5611A365C0EA06460422 /* TasteProfileViewModel.swift in Sources */,
+				6D9D5FE619148C39DEF335A4 /* User.swift in Sources */,
+				22D54C80D5C23138B7BF69A1 /* VideoPlayerView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		09FDFF5A219A15D20B89717D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		330F8C28064F0D2A64DA5FF1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 87A6J7UY87;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.byetz.BYETZ;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		411E942C402C13BA8CEB9614 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 87A6J7UY87;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.byetz.BYETZ;
+				SDKROOT = iphoneos;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		F0618E70F89C887ECF4E892D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		10CB967F83E7CA8C372D72CB /* Build configuration list for PBXProject "BYETZ" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				09FDFF5A219A15D20B89717D /* Debug */,
+				F0618E70F89C887ECF4E892D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		382700E931C836582BF82716 /* Build configuration list for PBXNativeTarget "BYETZ" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				411E942C402C13BA8CEB9614 /* Debug */,
+				330F8C28064F0D2A64DA5FF1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 6CC02B0665109D8D7CA077E7 /* Project object */;
+}

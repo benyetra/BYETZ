@@ -26,7 +26,7 @@ actor APIClient {
     private let decoder: JSONDecoder
     private let encoder: JSONEncoder
 
-    init(baseURL: String = "http://localhost:8000") {
+    init(baseURL: String = "http://192.168.1.9:8101") {
         self.baseURL = baseURL
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30

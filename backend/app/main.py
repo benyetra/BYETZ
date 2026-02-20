@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.config import get_settings
+from app.database import engine, Base
+from app.models import user, clip, interaction  # noqa: F401 — ensure models are registered
 from app.routers import auth, feed, clips, interactions, profile, library
 from app.routers import settings as settings_router
 from app.routers import taste_profile
@@ -9,6 +11,8 @@ from app.routers import taste_profile
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
     yield
 
 
