@@ -20,4 +20,6 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,
 )
 
-celery_app.autodiscover_tasks(["app.tasks"])
+celery_app.conf.update(
+    include=["app.tasks.clip_processing"],
+)
