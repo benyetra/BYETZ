@@ -1,10 +1,8 @@
-version: "3.8"
-
 services:
   api:
     build: ./backend
     ports:
-      - "8000:8000"
+      - "8101:8000"
     environment:
       - BYETZ_DATABASE_URL=postgresql+asyncpg://byetz:byetz@postgres:5432/byetz
       - BYETZ_DATABASE_URL_SYNC=postgresql://byetz:byetz@postgres:5432/byetz
@@ -12,7 +10,7 @@ services:
       - BYETZ_CLIP_STORAGE_PATH=/data/clips
       - BYETZ_SECRET_KEY=change-me-in-production
     volumes:
-      - clip_data:/data/clips
+      - /data/clips:/data/clips
     depends_on:
       - postgres
       - redis
@@ -26,7 +24,11 @@ services:
       - BYETZ_REDIS_URL=redis://redis:6379/0
       - BYETZ_CLIP_STORAGE_PATH=/data/clips
     volumes:
-      - clip_data:/data/clips
+      - /data/clips:/data/clips
+      - /Volumes/4TB:/Volumes/4TB:ro
+      - /Volumes/10TB2:/Volumes/10TB2:ro
+      - /Volumes/14TB:/Volumes/14TB:ro
+      - /Volumes/20TB:/Volumes/20TB:ro
     depends_on:
       - postgres
       - redis
@@ -52,4 +54,3 @@ services:
 volumes:
   pg_data:
   redis_data:
-  clip_data:
