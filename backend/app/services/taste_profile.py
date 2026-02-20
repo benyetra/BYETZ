@@ -1,9 +1,10 @@
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from app.models.clip import MediaItem
-from app.models.user import TasteSelection, UserEmbedding
+from app.models.user import User, TasteSelection, UserEmbedding
 from app.schemas.library import TasteProfileTitle
+from app.services.plex import PlexService
 
 
 class TasteProfileService:
@@ -11,6 +12,19 @@ class TasteProfileService:
         self.db = db
 
     async def get_available_titles(self, user_id: UUID) -> list[TasteProfileTitle]:
+        # Check if we have media items in the database
+        count_result = await self.db.execute(
+            select(func.count()).select_from(MediaItem)
+        )
+        count = count_result.scalar() or 0
+
+        if count > 0:
+            return await self._titles_from_db()
+
+        # No media items — fetch directly from Plex
+        return await self._titles_from_plex(user_id)
+
+    async def _titles_from_db(self) -> list[TasteProfileTitle]:
         result = await self.db.execute(
             select(MediaItem).where(
                 MediaItem.media_type.in_(["movie", "show"])
@@ -25,6 +39,55 @@ class TasteProfileService:
             )
             for item in items
         ]
+
+    async def _titles_from_plex(self, user_id: UUID) -> list[TasteProfileTitle]:
+        # Get user's Plex token
+        result = await self.db.execute(
+            select(User).where(User.id == user_id)
+        )
+        user = result.scalar_one_or_none()
+        if not user or not user.plex_token:
+            return []
+
+        plex = PlexService()
+        servers = await plex.get_servers(user.plex_token)
+        if not servers:
+            return []
+
+        titles: list[TasteProfileTitle] = []
+        seen_keys: set[str] = set()
+
+        for server in servers:
+            server_token = server.get("token", user.plex_token)
+            server_url = f"http://{server['address']}:{server['port']}"
+
+            libraries = await plex.get_libraries(server_url, server_token)
+
+            for lib in libraries:
+                items = await plex.get_library_items(
+                    server_url, server_token, lib["library_key"]
+                )
+                for item in items:
+                    key = item["rating_key"]
+                    if key in seen_keys:
+                        continue
+                    seen_keys.add(key)
+
+                    poster_url = None
+                    if item.get("poster"):
+                        poster_url = f"{server_url}{item['poster']}?X-Plex-Token={server_token}"
+
+                    titles.append(TasteProfileTitle(
+                        media_id=key,
+                        title=item["title"],
+                        year=item.get("year"),
+                        poster_url=poster_url,
+                        genre_tags=item.get("genres", []),
+                        media_type=item.get("type", "movie"),
+                    ))
+
+        titles.sort(key=lambda t: t.title)
+        return titles
 
     async def save_selections(self, user_id: UUID, selections: list[TasteProfileTitle]):
         for sel in selections:
