@@ -4,7 +4,7 @@ import AVKit
 struct FeedView: View {
     @StateObject private var viewModel = FeedViewModel()
     @State private var showInfoPanel = false
-    @State private var showOverlay = false
+    @State private var showPauseIcon = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -16,7 +16,7 @@ struct FeedView: View {
                         .tint(.white)
                 } else if let currentClip = viewModel.currentClip {
                     // Video player
-                    VideoPlayerView(clip: currentClip, viewModel: viewModel)
+                    VideoPlayerView(clip: currentClip, isPlaying: viewModel.isPlaying)
                         .ignoresSafeArea()
                         .gesture(
                             DragGesture(minimumDistance: 50)
@@ -26,18 +26,41 @@ struct FeedView: View {
                                     } else if value.translation.height > 50 {
                                         viewModel.previousClip()
                                     } else if value.translation.width < -50 {
-                                        showInfoPanel = true
+                                        withAnimation(.easeInOut(duration: 0.25)) {
+                                            showInfoPanel = true
+                                        }
                                     } else if value.translation.width > 50 {
-                                        showInfoPanel = false
+                                        withAnimation(.easeInOut(duration: 0.25)) {
+                                            showInfoPanel = false
+                                        }
                                     }
                                 }
                         )
                         .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                showOverlay.toggle()
-                            }
                             viewModel.togglePlayback()
+                            // Show play/pause indicator briefly
+                            withAnimation(.easeIn(duration: 0.1)) {
+                                showPauseIcon = true
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                withAnimation(.easeOut(duration: 0.3)) {
+                                    showPauseIcon = false
+                                }
+                            }
                         }
+
+                    // Play/pause indicator (center)
+                    if showPauseIcon {
+                        Image(systemName: viewModel.isPlaying ? "play.fill" : "pause.fill")
+                            .font(.system(size: 50))
+                            .foregroundColor(.white.opacity(0.8))
+                            .shadow(color: .black.opacity(0.5), radius: 10)
+                            .transition(.opacity)
+                            .allowsHitTesting(false)
+                    }
+
+                    // Metadata scrim (always visible, full-width gradient)
+                    ClipOverlayView(clip: currentClip)
 
                     // Engagement buttons (right side)
                     VStack(spacing: 20) {
@@ -72,21 +95,15 @@ struct FeedView: View {
                     .padding(.trailing, 16)
                     .frame(maxWidth: .infinity, alignment: .trailing)
 
-                    // Progress bar (bottom)
+                    // Progress bar (above tab bar)
                     VStack {
                         Spacer()
                         ProgressView(value: viewModel.playbackProgress)
-                            .tint(.white.opacity(0.7))
+                            .tint(.white.opacity(0.5))
                             .frame(height: 2)
                             .padding(.horizontal, 8)
-                            .padding(.bottom, 4)
                     }
-
-                    // Metadata overlay (on tap)
-                    if showOverlay {
-                        ClipOverlayView(clip: currentClip)
-                            .transition(.opacity)
-                    }
+                    .padding(.bottom, 50)
 
                     // Info panel (swipe left)
                     if showInfoPanel {
@@ -109,6 +126,7 @@ struct FeedView: View {
                 }
             }
         }
+        .toolbarBackground(.hidden, for: .tabBar)
         .onAppear {
             OrientationManager.shared.lockLandscape()
         }
@@ -143,34 +161,51 @@ struct ClipOverlayView: View {
     let clip: Clip
 
     var body: some View {
-        VStack {
-            Spacer()
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(clip.title)
-                        .font(.headline)
-                        .foregroundColor(.white)
-
-                    if let seasonEp = clip.seasonEpisode {
-                        Text(seasonEp)
-                            .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-
-                    Text(clip.genreTags.joined(separator: " · "))
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.6))
-                }
-                .padding()
-                .background(
+        GeometryReader { geo in
+            VStack {
+                Spacer()
+                ZStack(alignment: .bottomLeading) {
+                    // Full-width gradient extending into safe area
                     LinearGradient(
-                        colors: [.clear, .black.opacity(0.7)],
+                        stops: [
+                            .init(color: .clear, location: 0),
+                            .init(color: .black.opacity(0.03), location: 0.2),
+                            .init(color: .black.opacity(0.1), location: 0.35),
+                            .init(color: .black.opacity(0.25), location: 0.5),
+                            .init(color: .black.opacity(0.45), location: 0.65),
+                            .init(color: .black.opacity(0.6), location: 0.78),
+                            .init(color: .black.opacity(0.75), location: 0.9),
+                            .init(color: .black.opacity(0.85), location: 1.0),
+                        ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
-                )
-                Spacer()
+                    .frame(height: geo.size.height * 0.45)
+
+                    // Text content — positioned above tab bar
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(clip.title)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+
+                        if let seasonEp = clip.seasonEpisode {
+                            Text(seasonEp)
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.85))
+                        }
+
+                        if !clip.genreTags.isEmpty {
+                            Text(clip.genreTags.joined(separator: " \u{00B7} "))
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.65))
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, geo.safeAreaInsets.bottom + 54)
+                }
             }
+            .ignoresSafeArea()
         }
         .allowsHitTesting(false)
     }
@@ -189,7 +224,11 @@ struct ClipInfoPanel: View {
                         .font(.headline)
                         .foregroundColor(.white)
                     Spacer()
-                    Button(action: { isShowing = false }) {
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            isShowing = false
+                        }
+                    }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.gray)
                     }

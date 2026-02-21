@@ -2,7 +2,7 @@ import random
 from uuid import UUID
 from datetime import datetime, timedelta
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, not_
+from sqlalchemy import select, not_, func
 from app.models.clip import Clip
 from app.models.interaction import Interaction
 from app.models.user import UserEmbedding, TasteSelection
@@ -17,69 +17,100 @@ class RecommendationService:
         self.db = db
 
     async def get_personalized_feed(
-        self, user_id: UUID, limit: int = 10, offset: int = 0,
+        self, user_id: UUID, limit: int = 20, seen_ids: set[UUID] | None = None,
     ) -> list[ClipResponse]:
+        seen_ids = seen_ids or set()
         user_emb = await self._get_user_embedding(user_id)
         is_cold_start = (user_emb.interaction_count or 0) < settings.cold_start_threshold
 
         disliked_ids = await self._get_disliked_clip_ids(user_id)
         recent_liked_ids = await self._get_recent_liked_ids(user_id, days=7)
-        exclude_ids = set(disliked_ids) | set(recent_liked_ids)
+        exclude_ids = set(disliked_ids) | set(recent_liked_ids) | seen_ids
 
         if is_cold_start:
-            clips = await self._cold_start_feed(user_id, exclude_ids, limit, offset)
+            clips = await self._cold_start_feed(user_id, user_emb, exclude_ids, limit)
         else:
-            clips = await self._personalized_feed(user_id, user_emb, exclude_ids, limit, offset)
+            clips = await self._personalized_feed(user_id, user_emb, exclude_ids, limit)
 
         clips = self._apply_composition_rules(clips)
         return [self._clip_to_response(c) for c in clips[:limit]]
 
     async def _cold_start_feed(
-        self, user_id: UUID, exclude_ids: set, limit: int, offset: int,
+        self, user_id: UUID, user_emb: UserEmbedding,
+        exclude_ids: set, limit: int,
     ) -> list[Clip]:
+        """Cold start: use onboarding genre weights + taste selections + randomness."""
+        genre_weights = user_emb.genre_weights or {}
+
+        # Get taste selection media IDs for bonus scoring
         taste_result = await self.db.execute(
             select(TasteSelection.media_id).where(TasteSelection.user_id == user_id)
         )
-        taste_media_ids = [r[0] for r in taste_result.all()]
+        taste_media_ids = {r[0] for r in taste_result.all()}
 
+        # Fetch a large candidate pool
+        pool_size = limit * 8
         query = select(Clip).where(Clip.is_active == True)
         if exclude_ids:
             query = query.where(not_(Clip.id.in_(exclude_ids)))
+        query = query.order_by(func.random()).limit(pool_size)
 
-        if taste_media_ids:
-            taste_clips_q = query.where(Clip.media_id.in_(taste_media_ids)).order_by(
-                Clip.composite_score.desc()
-            ).limit(limit)
-            taste_result = await self.db.execute(taste_clips_q)
-            taste_clips = list(taste_result.scalars().all())
+        result = await self.db.execute(query)
+        candidates = list(result.scalars().all())
 
-            remaining = limit - len(taste_clips)
-            if remaining > 0:
-                used_ids = {c.id for c in taste_clips} | exclude_ids
-                other_q = query.where(
-                    not_(Clip.media_id.in_(taste_media_ids)),
-                )
-                if used_ids:
-                    other_q = other_q.where(not_(Clip.id.in_(used_ids)))
-                other_q = other_q.order_by(Clip.composite_score.desc()).limit(remaining)
-                other_result = await self.db.execute(other_q)
-                taste_clips.extend(other_result.scalars().all())
-            return taste_clips
-        else:
-            result = await self.db.execute(
-                query.order_by(Clip.composite_score.desc()).offset(offset).limit(limit)
-            )
-            return list(result.scalars().all())
+        if not candidates:
+            return []
+
+        # Score each clip
+        scored = []
+        for clip in candidates:
+            score = 0.0
+
+            # Base quality score (normalized to 0-1 range)
+            base = clip.composite_score or 0.0
+            score += min(base, 1.0) * 0.4
+
+            # Genre match boost from onboarding weights
+            if genre_weights and clip.genre_tags:
+                genre_boost = sum(genre_weights.get(g, 0.0) for g in clip.genre_tags)
+                score += min(max(genre_boost, -0.3), 0.5)
+
+            # Taste selection bonus — clips from media the user selected
+            if clip.media_id in taste_media_ids:
+                score += 0.3
+
+            # Random factor to prevent determinism
+            score += random.uniform(0, 0.35)
+
+            scored.append((clip, score))
+
+        scored.sort(key=lambda x: x[1], reverse=True)
+
+        # Take top candidates with exploration mix
+        exploration_count = max(2, int(limit * settings.exploration_rate))
+        main_count = limit - exploration_count
+        main_clips = [c for c, _ in scored[:main_count]]
+
+        remaining = [c for c, _ in scored[main_count:]]
+        explore_clips = random.sample(
+            remaining, min(exploration_count, len(remaining))
+        ) if remaining else []
+
+        feed = main_clips + explore_clips
+        random.shuffle(feed)
+        return feed
 
     async def _personalized_feed(
         self, user_id: UUID, user_emb: UserEmbedding,
-        exclude_ids: set, limit: int, offset: int,
+        exclude_ids: set, limit: int,
     ) -> list[Clip]:
-        fetch_limit = limit * 3
+        """Warm feed: genre weights from interactions + exploration."""
+        pool_size = limit * 5
         query = select(Clip).where(Clip.is_active == True)
         if exclude_ids:
             query = query.where(not_(Clip.id.in_(exclude_ids)))
-        query = query.order_by(Clip.composite_score.desc()).limit(fetch_limit)
+        # Use random ordering for the candidate pool to get variety
+        query = query.order_by(func.random()).limit(pool_size)
 
         result = await self.db.execute(query)
         candidates = list(result.scalars().all())
@@ -87,24 +118,36 @@ class RecommendationService:
 
         scored = []
         for clip in candidates:
-            base_score = clip.composite_score or 0.0
-            genre_boost = sum(genre_weights.get(g, 0.0) for g in (clip.genre_tags or []))
-            genre_boost = min(genre_boost, 0.5)
+            score = 0.0
 
-            recency_boost = 0.0
+            # Base quality score
+            base = clip.composite_score or 0.0
+            score += min(base, 1.0) * 0.35
+
+            # Genre match from learned weights
+            if genre_weights and clip.genre_tags:
+                genre_boost = sum(genre_weights.get(g, 0.0) for g in clip.genre_tags)
+                score += min(max(genre_boost, -0.3), 0.5)
+
+            # Recency boost for fresh clips
             if clip.created_at and (datetime.utcnow() - clip.created_at).days < 2:
-                recency_boost = 0.2
+                score += 0.15
 
-            scored.append((clip, base_score + genre_boost + recency_boost))
+            # Small random factor for variety
+            score += random.uniform(0, 0.2)
+
+            scored.append((clip, score))
 
         scored.sort(key=lambda x: x[1], reverse=True)
 
-        exploration_count = max(1, int(limit * settings.exploration_rate))
+        exploration_count = max(2, int(limit * settings.exploration_rate))
         main_count = limit - exploration_count
         main_clips = [c for c, _ in scored[:main_count]]
 
         remaining = [c for c, _ in scored[main_count:]]
-        explore_clips = random.sample(remaining, min(exploration_count, len(remaining))) if remaining else []
+        explore_clips = random.sample(
+            remaining, min(exploration_count, len(remaining))
+        ) if remaining else []
 
         feed = main_clips + explore_clips
         random.shuffle(feed)

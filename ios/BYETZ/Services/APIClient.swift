@@ -85,8 +85,12 @@ actor APIClient {
         return try await request("/auth/plex", method: "POST", body: PlexAuthBody(plex_token: token))
     }
 
-    func getFeed(limit: Int = 10, offset: Int = 0) async throws -> FeedResponse {
-        return try await request("/feed?limit=\(limit)&offset=\(offset)")
+    func getFeed(limit: Int = 20, seenIds: [UUID] = []) async throws -> FeedResponse {
+        struct FeedRequest: Encodable {
+            let limit: Int
+            let seen_ids: [UUID]
+        }
+        return try await request("/feed", method: "POST", body: FeedRequest(limit: limit, seen_ids: seenIds))
     }
 
     func streamURL(clipId: UUID) -> URL? {

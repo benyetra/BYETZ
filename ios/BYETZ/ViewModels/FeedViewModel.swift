@@ -12,6 +12,7 @@ class FeedViewModel: ObservableObject {
 
     private var likedClipIds: Set<UUID> = []
     private var savedClipIds: Set<UUID> = []
+    private var seenClipIds: Set<UUID> = []
     private let sessionId = UUID()
     private var player: AVPlayer?
     private var timeObserver: Any?
@@ -26,8 +27,16 @@ class FeedViewModel: ObservableObject {
         isLoading = true
 
         do {
-            let response = try await APIClient.shared.getFeed(limit: 20, offset: clips.count)
-            clips.append(contentsOf: response.clips)
+            let response = try await APIClient.shared.getFeed(
+                limit: 20, seenIds: Array(seenClipIds)
+            )
+            let newClips = response.clips.filter { clip in
+                !seenClipIds.contains(clip.id)
+            }
+            clips.append(contentsOf: newClips)
+            for clip in newClips {
+                seenClipIds.insert(clip.id)
+            }
         } catch {
             print("Failed to load feed: \(error)")
         }
@@ -42,6 +51,7 @@ class FeedViewModel: ObservableObject {
         }
         currentIndex += 1
         playbackProgress = 0
+        isPlaying = true
 
         if currentIndex >= clips.count - 5 {
             Task { await loadFeed() }
@@ -52,6 +62,7 @@ class FeedViewModel: ObservableObject {
         guard currentIndex > 0 else { return }
         currentIndex -= 1
         playbackProgress = 0
+        isPlaying = true
     }
 
     func togglePlayback() {

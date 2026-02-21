@@ -40,12 +40,10 @@ struct Clip: Codable, Identifiable {
 
 struct FeedResponse: Codable {
     let clips: [Clip]
-    let offset: Int
-    let limit: Int
     let hasMore: Bool
 
     enum CodingKeys: String, CodingKey {
-        case clips, offset, limit
+        case clips
         case hasMore = "has_more"
     }
 }

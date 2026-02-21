@@ -3,7 +3,7 @@ import AVKit
 
 struct VideoPlayerView: UIViewControllerRepresentable {
     let clip: Clip
-    @ObservedObject var viewModel: FeedViewModel
+    let isPlaying: Bool
 
     func makeUIViewController(context: Context) -> AVPlayerViewController {
         let controller = AVPlayerViewController()
@@ -30,17 +30,24 @@ struct VideoPlayerView: UIViewControllerRepresentable {
     }
 
     func updateUIViewController(_ controller: AVPlayerViewController, context: Context) {
+        guard let player = controller.player else { return }
         guard let url = streamURL(for: clip) else { return }
 
-        // Only replace player if the clip changed
-        if let currentURL = (controller.player?.currentItem?.asset as? AVURLAsset)?.url,
-           currentURL == url {
+        // Replace player if clip changed
+        if let currentURL = (player.currentItem?.asset as? AVURLAsset)?.url,
+           currentURL != url {
+            let newPlayer = AVPlayer(url: url)
+            controller.player = newPlayer
+            newPlayer.play()
             return
         }
 
-        let player = AVPlayer(url: url)
-        controller.player = player
-        player.play()
+        // Handle play/pause
+        if isPlaying {
+            if player.rate == 0 { player.play() }
+        } else {
+            if player.rate != 0 { player.pause() }
+        }
     }
 
     private func streamURL(for clip: Clip) -> URL? {

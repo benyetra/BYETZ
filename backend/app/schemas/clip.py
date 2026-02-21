@@ -25,8 +25,11 @@ class ClipResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class FeedRequest(BaseModel):
+    limit: int = 20
+    seen_ids: list[UUID] = []
+
+
 class FeedResponse(BaseModel):
     clips: list[ClipResponse]
-    offset: int
-    limit: int
     has_more: bool
