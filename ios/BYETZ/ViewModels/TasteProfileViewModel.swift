@@ -37,8 +37,13 @@ class TasteProfileViewModel: ObservableObject {
             let selections: [TasteProfileTitle]
         }
 
+        struct SelectionResponse: Decodable {
+            let status: String
+            let count: Int
+        }
+
         do {
-            let _: [String: String] = try await APIClient.shared.request(
+            let _: SelectionResponse = try await APIClient.shared.request(
                 "/taste-profile/select",
                 method: "POST",
                 body: SelectionBody(selections: selected)

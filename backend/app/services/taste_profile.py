@@ -71,27 +71,46 @@ class TasteProfileService:
         count = count_result.scalar() or 0
 
         if count > 0:
-            titles = await self._titles_from_db()
+            titles = await self._titles_from_db(user_id)
         else:
             titles = await self._titles_from_plex(user_id)
 
         return _sample_genre_diverse(titles, SAMPLE_SIZE)
 
-    async def _titles_from_db(self) -> list[TasteProfileTitle]:
+    async def _titles_from_db(self, user_id: UUID) -> list[TasteProfileTitle]:
+        # Get Plex server info for building poster proxy URLs
+        result = await self.db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+
+        server_url = None
+        server_token = None
+        if user and user.plex_token:
+            plex = PlexService()
+            servers = await plex.get_servers(user.plex_token)
+            if servers:
+                s = servers[0]
+                server_url = f"http://{s['address']}:{s['port']}"
+                server_token = s.get("token", user.plex_token)
+
         result = await self.db.execute(
             select(MediaItem).where(
                 MediaItem.media_type.in_(["movie", "show"])
             ).order_by(MediaItem.title)
         )
         items = result.scalars().all()
-        return [
-            TasteProfileTitle(
+        titles = []
+        for item in items:
+            poster_url = None
+            if item.poster_url and server_url and server_token:
+                direct_url = f"{server_url}{item.poster_url}?X-Plex-Token={server_token}"
+                poster_url = f"/library/poster?url={quote(direct_url, safe='')}"
+
+            titles.append(TasteProfileTitle(
                 media_id=item.plex_rating_key, title=item.title,
-                year=item.year, poster_url=item.poster_url,
+                year=item.year, poster_url=poster_url,
                 genre_tags=item.genre_tags or [], media_type=item.media_type,
-            )
-            for item in items
-        ]
+            ))
+        return titles
 
     async def _titles_from_plex(self, user_id: UUID) -> list[TasteProfileTitle]:
         result = await self.db.execute(
