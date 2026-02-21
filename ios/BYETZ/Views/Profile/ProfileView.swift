@@ -1,7 +1,9 @@
 import SwiftUI
+import AVKit
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
+    @State private var selectedClip: Clip?
 
     var body: some View {
         NavigationView {
@@ -49,6 +51,9 @@ struct ProfileView: View {
                                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 160))], spacing: 8) {
                                     ForEach(viewModel.savedClips) { clip in
                                         SavedClipCard(clip: clip)
+                                            .onTapGesture {
+                                                selectedClip = clip
+                                            }
                                     }
                                 }
                                 .padding(.horizontal)
@@ -60,6 +65,9 @@ struct ProfileView: View {
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .fullScreenCover(item: $selectedClip) { clip in
+                ClipPlayerView(clip: clip)
+            }
         }
         .task {
             await viewModel.loadProfile()
@@ -88,13 +96,34 @@ struct SavedClipCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.gray.opacity(0.2))
-                .aspectRatio(16/9, contentMode: .fit)
-                .overlay(
-                    Image(systemName: "play.fill")
-                        .foregroundColor(.white.opacity(0.7))
-                )
+            ZStack {
+                // Thumbnail
+                if let url = thumbnailURL {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(16/9, contentMode: .fill)
+                        case .failure:
+                            thumbnailPlaceholder
+                        default:
+                            thumbnailPlaceholder
+                                .overlay(ProgressView().tint(.white))
+                        }
+                    }
+                    .frame(height: 90)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                } else {
+                    thumbnailPlaceholder
+                }
+
+                // Play icon overlay
+                Image(systemName: "play.circle.fill")
+                    .font(.title)
+                    .foregroundColor(.white.opacity(0.85))
+                    .shadow(color: .black.opacity(0.5), radius: 4)
+            }
 
             Text(clip.title)
                 .font(.caption)
@@ -104,6 +133,79 @@ struct SavedClipCard: View {
             Text("\(clip.durationMs / 1000)s")
                 .font(.caption2)
                 .foregroundColor(.gray)
+        }
+    }
+
+    private var thumbnailURL: URL? {
+        guard let token = KeychainService.shared.getToken() else { return nil }
+        let base = "http://192.168.1.9:8101"
+        return URL(string: "\(base)/clips/\(clip.id.uuidString)/thumbnail?token=\(token)")
+    }
+
+    private var thumbnailPlaceholder: some View {
+        RoundedRectangle(cornerRadius: 8)
+            .fill(Color.gray.opacity(0.2))
+            .aspectRatio(16/9, contentMode: .fit)
+    }
+}
+
+/// Full-screen player for a single clip from the profile
+struct ClipPlayerView: View {
+    let clip: Clip
+    @Environment(\.dismiss) private var dismiss
+    @State private var isPlaying = true
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+
+            VideoPlayerView(clip: clip, isPlaying: isPlaying)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    isPlaying.toggle()
+                }
+
+            // Close button
+            VStack {
+                HStack {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title)
+                            .foregroundColor(.white.opacity(0.8))
+                            .shadow(color: .black.opacity(0.5), radius: 4)
+                    }
+                    .padding(.leading, 16)
+                    .padding(.top, 8)
+                    Spacer()
+                }
+                Spacer()
+            }
+
+            // Clip info at bottom
+            VStack {
+                Spacer()
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(clip.title)
+                            .font(.headline)
+                            .foregroundColor(.white)
+                        if let se = clip.seasonEpisode {
+                            Text(se)
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                    }
+                    Spacer()
+                }
+                .padding()
+                .background(
+                    LinearGradient(
+                        colors: [.clear, .black.opacity(0.7)],
+                        startPoint: .top, endPoint: .bottom
+                    )
+                )
+            }
+            .allowsHitTesting(false)
         }
     }
 }

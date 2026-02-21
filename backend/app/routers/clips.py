@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
@@ -79,6 +79,31 @@ async def stream_clip(
                 "Content-Length": str(file_size),
             },
         )
+
+
+@router.get("/{clip_id}/thumbnail")
+async def get_thumbnail(
+    clip_id: UUID,
+    token: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_db),
+):
+    """Serve the thumbnail image for a clip."""
+    if token:
+        AuthService.decode_token(token)
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token required")
+
+    result = await db.execute(select(Clip).where(Clip.id == clip_id))
+    clip = result.scalar_one_or_none()
+    if not clip:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Clip not found")
+
+    # Find first existing thumbnail
+    for thumb_path in (clip.thumbnail_paths or []):
+        if os.path.exists(thumb_path):
+            return FileResponse(thumb_path, media_type="image/jpeg")
+
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No thumbnail available")
 
 
 @router.get("/{clip_id}", response_model=ClipResponse)

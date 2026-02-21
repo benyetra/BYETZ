@@ -1,6 +1,6 @@
 import Foundation
 
-struct Clip: Codable, Identifiable {
+struct Clip: Codable, Identifiable, Hashable {
     let id: UUID
     let mediaId: String
     let title: String
