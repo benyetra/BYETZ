@@ -65,6 +65,9 @@ class ProfileService:
         result = await self.db.execute(select(UserSettings).where(UserSettings.user_id == user_id))
         s = result.scalar_one_or_none()
         if not s:
+            user = await self.db.execute(select(User).where(User.id == user_id))
+            if not user.scalar_one_or_none():
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
             s = UserSettings(user_id=user_id)
             self.db.add(s)
             await self.db.commit()
@@ -75,6 +78,9 @@ class ProfileService:
         result = await self.db.execute(select(UserSettings).where(UserSettings.user_id == user_id))
         s = result.scalar_one_or_none()
         if not s:
+            user = await self.db.execute(select(User).where(User.id == user_id))
+            if not user.scalar_one_or_none():
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
             s = UserSettings(user_id=user_id)
             self.db.add(s)
         for key, value in update.model_dump(exclude_unset=True).items():

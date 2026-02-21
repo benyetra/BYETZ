@@ -1,10 +1,13 @@
 import os
 import uuid
 import asyncio
+import logging
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import sessionmaker
 from app.tasks.celery_app import celery_app
+
+logger = logging.getLogger(__name__)
 from app.config import get_settings
 from app.models.clip import Clip, MediaItem, PlexLibrary
 from app.models.user import User
@@ -51,12 +54,14 @@ def process_media_item(self, media_item_id: str):
         ).scalar_one_or_none()
 
         if not item or not item.file_path:
+            logger.warning("Skipping %s: item not found or no file path", media_item_id)
             return {"status": "skipped", "reason": "item not found or no file path"}
 
         # Check if file is accessible
         if not os.path.exists(item.file_path):
             item.processing_status = "pending"
             db.commit()
+            logger.warning("Skipping '%s': file not accessible: %s", item.title, item.file_path)
             return {"status": "skipped", "reason": f"file not accessible: {item.file_path}"}
 
         # --- Diff check: how many clips do we already have? ---
@@ -68,15 +73,17 @@ def process_media_item(self, media_item_id: str):
         ).scalar() or 0
 
         if existing_count >= max_clips:
-            # Already have enough clips — mark completed and skip
             item.processing_status = "completed"
             item.clips_generated = existing_count
             item.last_processed = datetime.utcnow()
             db.commit()
+            logger.info("Skipping '%s': already has %d/%d clips", item.title, existing_count, max_clips)
             return {"status": "skipped", "reason": f"already has {existing_count}/{max_clips} clips"}
 
         clips_needed = max_clips - existing_count
         existing_midpoints = _existing_clip_midpoints(db, item.plex_rating_key)
+
+        logger.info("Processing '%s' (%s) — need %d clips", item.title, item.media_type, clips_needed)
 
         item.processing_status = "processing"
         db.commit()
@@ -84,30 +91,42 @@ def process_media_item(self, media_item_id: str):
         engine = ClipEngine()
         scoring = ClipScoringService()
 
+        logger.info("  [%s] Extracting subtitles...", item.title)
         subtitles = engine.extract_subtitles(item.file_path)
+        logger.info("  [%s] Subtitles: %d entries", item.title, len(subtitles))
+
+        logger.info("  [%s] Detecting scene changes...", item.title)
         scene_changes = engine.detect_scene_changes(item.file_path)
+        logger.info("  [%s] Scene changes: %d detected", item.title, len(scene_changes))
+
+        logger.info("  [%s] Analyzing audio energy...", item.title)
         audio_energy = engine.analyze_audio_energy(item.file_path)
+        logger.info("  [%s] Audio energy: %d samples", item.title, len(audio_energy))
 
         total_duration = item.duration_ms or 7200000
         candidates = engine.identify_clip_candidates(
             subtitles, scene_changes, audio_energy, total_duration,
         )
+        logger.info("  [%s] Candidates identified: %d", item.title, len(candidates))
 
         # Filter out candidates that overlap with existing clips
         if existing_midpoints:
+            before = len(candidates)
             candidates = [
                 c for c in candidates
                 if not _overlaps_existing(c.start_ms, c.end_ms, existing_midpoints)
             ]
+            logger.info("  [%s] After overlap filter: %d (removed %d)", item.title, len(candidates), before - len(candidates))
 
         # Rank and take only what we need
         ranked = scoring.rank_candidates(candidates, clips_needed)
+        logger.info("  [%s] Extracting %d clips...", item.title, len(ranked))
 
         clips_dir = os.path.join(settings.clip_storage_path, str(item.plex_rating_key))
         os.makedirs(clips_dir, exist_ok=True)
 
         clips_created = 0
-        for candidate in ranked:
+        for i, candidate in enumerate(ranked):
             clip_id = uuid.uuid4()
             clip_path = os.path.join(clips_dir, f"{clip_id}.mp4")
 
@@ -146,6 +165,8 @@ def process_media_item(self, media_item_id: str):
                 )
                 db.add(clip)
                 clips_created += 1
+            else:
+                logger.warning("  [%s] Clip %d/%d extraction failed", item.title, i + 1, len(ranked))
 
         total_clips = existing_count + clips_created
         item.processing_status = "completed"
@@ -153,6 +174,7 @@ def process_media_item(self, media_item_id: str):
         item.last_processed = datetime.utcnow()
 
         db.commit()
+        logger.info("Completed '%s': %d clips created (%d total)", item.title, clips_created, total_clips)
         return {
             "status": "completed",
             "clips_created": clips_created,
@@ -162,6 +184,8 @@ def process_media_item(self, media_item_id: str):
 
     except Exception as exc:
         db.rollback()
+        title = item.title if item else media_item_id
+        logger.error("Failed processing '%s': %s", title, exc, exc_info=True)
         if item:
             item.processing_status = "failed"
             db.commit()
