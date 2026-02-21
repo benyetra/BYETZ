@@ -1,7 +1,7 @@
 import os
 import uuid
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import create_engine, select, func
 from sqlalchemy.orm import sessionmaker
 from app.tasks.celery_app import celery_app
@@ -16,6 +16,29 @@ settings = get_settings()
 
 sync_engine = create_engine(settings.database_url_sync)
 SyncSession = sessionmaker(bind=sync_engine)
+
+# Overlap threshold: if a candidate's midpoint is within this range of an
+# existing clip's midpoint, consider it a duplicate (in ms)
+OVERLAP_THRESHOLD_MS = 5000
+
+
+def _existing_clip_midpoints(db, media_id: str) -> list[int]:
+    """Get midpoints of all existing clips for a media item."""
+    result = db.execute(
+        select(Clip.start_time_ms, Clip.end_time_ms).where(
+            Clip.media_id == media_id, Clip.is_active == True
+        )
+    )
+    return [(row[0] + row[1]) // 2 for row in result.all()]
+
+
+def _overlaps_existing(candidate_start: int, candidate_end: int, existing_midpoints: list[int]) -> bool:
+    """Check if a candidate overlaps with any existing clip."""
+    candidate_mid = (candidate_start + candidate_end) // 2
+    for mid in existing_midpoints:
+        if abs(candidate_mid - mid) < OVERLAP_THRESHOLD_MS:
+            return True
+    return False
 
 
 @celery_app.task(bind=True, max_retries=3)
@@ -36,6 +59,25 @@ def process_media_item(self, media_item_id: str):
             db.commit()
             return {"status": "skipped", "reason": f"file not accessible: {item.file_path}"}
 
+        # --- Diff check: how many clips do we already have? ---
+        max_clips = settings.clips_per_movie if item.media_type == "movie" else settings.clips_per_episode
+        existing_count = db.execute(
+            select(func.count()).select_from(Clip).where(
+                Clip.media_id == item.plex_rating_key, Clip.is_active == True
+            )
+        ).scalar() or 0
+
+        if existing_count >= max_clips:
+            # Already have enough clips — mark completed and skip
+            item.processing_status = "completed"
+            item.clips_generated = existing_count
+            item.last_processed = datetime.utcnow()
+            db.commit()
+            return {"status": "skipped", "reason": f"already has {existing_count}/{max_clips} clips"}
+
+        clips_needed = max_clips - existing_count
+        existing_midpoints = _existing_clip_midpoints(db, item.plex_rating_key)
+
         item.processing_status = "processing"
         db.commit()
 
@@ -51,8 +93,15 @@ def process_media_item(self, media_item_id: str):
             subtitles, scene_changes, audio_energy, total_duration,
         )
 
-        max_clips = settings.clips_per_movie if item.media_type == "movie" else settings.clips_per_episode
-        ranked = scoring.rank_candidates(candidates, max_clips)
+        # Filter out candidates that overlap with existing clips
+        if existing_midpoints:
+            candidates = [
+                c for c in candidates
+                if not _overlaps_existing(c.start_ms, c.end_ms, existing_midpoints)
+            ]
+
+        # Rank and take only what we need
+        ranked = scoring.rank_candidates(candidates, clips_needed)
 
         clips_dir = os.path.join(settings.clip_storage_path, str(item.plex_rating_key))
         os.makedirs(clips_dir, exist_ok=True)
@@ -98,19 +147,18 @@ def process_media_item(self, media_item_id: str):
                 db.add(clip)
                 clips_created += 1
 
+        total_clips = existing_count + clips_created
         item.processing_status = "completed"
-        item.clips_generated = clips_created
+        item.clips_generated = total_clips
         item.last_processed = datetime.utcnow()
 
-        # Update PlexLibrary processed count
-        db.execute(
-            select(func.count()).select_from(MediaItem).where(
-                MediaItem.processing_status == "completed"
-            )
-        )
-
         db.commit()
-        return {"status": "completed", "clips_created": clips_created}
+        return {
+            "status": "completed",
+            "clips_created": clips_created,
+            "clips_existing": existing_count,
+            "clips_total": total_clips,
+        }
 
     except Exception as exc:
         db.rollback()
@@ -186,7 +234,11 @@ def discover_libraries(user_id: str):
 @celery_app.task
 def scan_library(user_id: str):
     """Phase 2: Process only enabled libraries — fetch items and queue clip generation.
-    Commits items to DB first, THEN queues Celery tasks so workers can find them."""
+    Commits items to DB first, THEN queues Celery tasks so workers can find them.
+
+    Diff-aware: only queues items that need clips generated. Skips items that
+    already have the expected number of clips. Recovers stuck 'processing' items.
+    """
     db = SyncSession()
     try:
         user = db.execute(
@@ -205,8 +257,35 @@ def scan_library(user_id: str):
         ).scalars().all()
         enabled_keys = {(lib.server_id, lib.library_key) for lib in enabled_libs}
 
+        # Recover stuck items: reset "processing" items older than 2 hours
+        stale_cutoff = datetime.utcnow() - timedelta(hours=2)
+        stale_items = db.execute(
+            select(MediaItem).where(
+                MediaItem.processing_status == "processing",
+                MediaItem.last_processed < stale_cutoff,
+            )
+        ).scalars().all()
+        for stale in stale_items:
+            stale.processing_status = "pending"
+
+        # Also reset items stuck in "processing" with no last_processed timestamp
+        stuck_items = db.execute(
+            select(MediaItem).where(
+                MediaItem.processing_status == "processing",
+                MediaItem.last_processed == None,
+            )
+        ).scalars().all()
+        for stuck in stuck_items:
+            stuck.processing_status = "pending"
+
+        if stale_items or stuck_items:
+            db.commit()
+
         # Phase 1: Collect all items and save to DB
         item_ids_to_process = []
+        items_skipped = 0
+        items_new = 0
+
         for server in servers:
             server_token = server.get("token", user.plex_token)
             server_url = f"http://{server['address']}:{server['port']}"
@@ -246,6 +325,7 @@ def scan_library(user_id: str):
                     ).scalar_one_or_none()
 
                     if not existing:
+                        # Brand new item
                         media_item = MediaItem(
                             plex_rating_key=item_data["rating_key"],
                             title=item_data["title"], media_type=item_data["type"],
@@ -260,8 +340,32 @@ def scan_library(user_id: str):
                         db.add(media_item)
                         db.flush()
                         item_ids_to_process.append(str(media_item.id))
+                        items_new += 1
+
                     elif existing.processing_status in ("pending", "failed"):
+                        # Retry failed/pending items
                         item_ids_to_process.append(str(existing.id))
+
+                    elif existing.processing_status == "completed":
+                        # Check if we need more clips (diff check)
+                        max_clips = (
+                            settings.clips_per_movie
+                            if existing.media_type == "movie"
+                            else settings.clips_per_episode
+                        )
+                        actual_clips = db.execute(
+                            select(func.count()).select_from(Clip).where(
+                                Clip.media_id == existing.plex_rating_key,
+                                Clip.is_active == True,
+                            )
+                        ).scalar() or 0
+
+                        if actual_clips < max_clips:
+                            # Need more clips — re-queue
+                            existing.processing_status = "pending"
+                            item_ids_to_process.append(str(existing.id))
+                        else:
+                            items_skipped += 1
 
                 # Update processed count
                 if plex_lib:
@@ -281,7 +385,13 @@ def scan_library(user_id: str):
         for item_id in item_ids_to_process:
             process_media_item.delay(item_id)
 
-        return {"status": "completed", "items_queued": len(item_ids_to_process)}
+        return {
+            "status": "completed",
+            "items_queued": len(item_ids_to_process),
+            "items_new": items_new,
+            "items_skipped": items_skipped,
+            "items_recovered": len(stale_items) + len(stuck_items),
+        }
     except Exception as exc:
         db.rollback()
         return {"status": "error", "reason": str(exc)}
