@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from uuid import UUID
+from typing import Optional
 import os
 from app.database import get_db
 from app.models.clip import Clip
 from app.schemas.clip import ClipResponse
-from app.services.auth import get_current_user
+from app.services.auth import get_current_user, AuthService
 
 router = APIRouter()
 
@@ -15,9 +16,15 @@ router = APIRouter()
 @router.get("/{clip_id}/stream")
 async def stream_clip(
     clip_id: UUID,
-    user_id: UUID = Depends(get_current_user),
+    token: Optional[str] = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
+    """Stream a clip. Accepts auth via Bearer header OR ?token= query param (for AVPlayer)."""
+    if token:
+        AuthService.decode_token(token)
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token required")
+
     result = await db.execute(select(Clip).where(Clip.id == clip_id))
     clip = result.scalar_one_or_none()
     if not clip:

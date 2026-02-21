@@ -10,23 +10,45 @@ struct VideoPlayerView: UIViewControllerRepresentable {
         controller.showsPlaybackControls = false
         controller.videoGravity = .resizeAspectFill
 
-        if let url = APIClient.shared.streamURLSync(clipId: clip.id) {
+        if let url = streamURL(for: clip) {
             let player = AVPlayer(url: url)
             controller.player = player
             player.play()
+
+            // Loop playback
+            NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemDidPlayToEndTime,
+                object: player.currentItem,
+                queue: .main
+            ) { _ in
+                player.seek(to: .zero)
+                player.play()
+            }
         }
 
         return controller
     }
 
     func updateUIViewController(_ controller: AVPlayerViewController, context: Context) {
-        // Update player when clip changes
-    }
-}
+        guard let url = streamURL(for: clip) else { return }
 
-extension APIClient {
-    nonisolated func streamURLSync(clipId: UUID) -> URL? {
-        let baseURL = "http://localhost:8000"
-        return URL(string: "\(baseURL)/clips/\(clipId.uuidString)/stream")
+        // Only replace player if the clip changed
+        if let currentURL = (controller.player?.currentItem?.asset as? AVURLAsset)?.url,
+           currentURL == url {
+            return
+        }
+
+        let player = AVPlayer(url: url)
+        controller.player = player
+        player.play()
+    }
+
+    private func streamURL(for clip: Clip) -> URL? {
+        let baseURL = "http://192.168.1.9:8101"
+        var urlString = "\(baseURL)/clips/\(clip.id.uuidString)/stream"
+        if let token = KeychainService.shared.getToken() {
+            urlString += "?token=\(token)"
+        }
+        return URL(string: urlString)
     }
 }
